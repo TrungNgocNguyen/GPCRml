@@ -1,0 +1,25 @@
+# hierarchical overview on GPCR-ML structure
+# use cases: - retrieve descriptors for a PDB code
+             - retrieve descriptors for all PDB codes stored in GPCRdb
+             - retrieve descriptors for homology_model
+             - retrieve descriptors from trajectory
+# each level is intended by a tab
+README.md
+gpcrml_lib/
+	__init__.py
+	data.py
+		GetReceptorMapping
+			get_protein_name()
+			generate_sequence_dict()
+			generate_pdb_sequence_dict()
+			align_with_generic_numbers()
+			assign_generic_numbers_to_pdb()
+		GetDescriptors
+			get_dihedrals()
+			get_descriptor_x()
+	training.py
+		...
+	prediction.py
+		...
+	visualization.py
+		...
