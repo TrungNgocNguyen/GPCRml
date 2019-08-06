@@ -2,27 +2,27 @@ from urllib.request import urlopen
 import json
 from collections import OrderedDict
 from Bio import pairwise2
-from checker import special_character_checker
+from checker import special_character, len_is_four
 from timeit import default_timer as timer
 
 
-class Data:
+class GetReceptorMapping:
     """A descriptor extracted from a PDB file or MD trajectory, mapped to BWN numbering scheme"""
-
-    protein_name = ""
-    pdb_code = ""
-    pdb_marker = ""
-    preferred_chain = ""
-
-    sequence_dict = ""
-    pdb_sequence_dict = ""
-    pdb_generic_numbers_dict = ""
-    pdb_generic_numbers_dict_marker = ""
 
     def __init__(self, topology_dir, trajectory_dir, identifier):
         self.topology_dir = topology_dir
         self.trajectory_dir = trajectory_dir
         self.identifier = identifier
+
+        self.protein_name = None
+        self.pdb_code = None
+        self.pdb_marker = None
+        self.preferred_chain = None
+
+        self.sequence_dict = None
+        self.pdb_sequence_dict = None
+        self.pdb_generic_numbers_dict = None
+        self.pdb_generic_numbers_dict_marker = None
 
     def align_with_generic_numbers(self):
         # Helper functions
@@ -34,7 +34,7 @@ class Data:
             :param identifier: self.identifier
             :return: write protein_name in class attribute
             """
-            if len(identifier) == 4 and not special_character_checker(identifier):
+            if len_is_four(identifier) and not special_character(identifier):
                 print('Identifier is PDB code "{}"...'.format(identifier))
                 response = urlopen('https://gpcrdb.org/services/structure/{}'.format(identifier))
                 protein = json.loads(response.read().decode('utf-8'))
@@ -45,13 +45,13 @@ class Data:
             else:
                 print('Identifier is protein name "{}"...'.format(identifier))
                 self.pdb = False
-                if special_character_checker(identifier, '_'):
+                if special_character(identifier, '_'):
                     self.protein_name = identifier
                 else:
                     print("The specified identifier '{}' needs to be a PDB code (e.g. '3V2Y') ".format(identifier),
                           "or a protein name (e.g. 's1pr1_human')")
 
-        def generate_sequence_dict(protein_name):
+        def get_sequence_dict(protein_name):
             """"""
             print('Retrieving sequence for "{}"...'.format(protein_name))
             response = urlopen('https://gpcrdb.org/services/residues/{}'.format(protein_name))
@@ -61,7 +61,7 @@ class Data:
                 dict[residue['sequence_number']] = [residue['amino_acid'], residue['display_generic_number']]
             self.sequence_dict = dict
 
-        def generate_pdb_sequence_dict(preferred_chain, topology_dir):
+        def get_pdb_sequence_dict(preferred_chain, topology_dir):
             amino_acid_dict = {'ALA': 'A', 'ARG': 'R', 'ASN': 'N', 'ASP': 'D', 'CYS': 'C', 'GLN': 'Q', 'GLU': 'E',
                                'GLY': 'G', 'HIS': 'H', 'ILE': 'I', 'LEU': 'L', 'LYS': 'K', 'MET': 'M', 'PHE': 'F',
                                'PRO': 'P', 'SEC': 'U', 'SER': 'S', 'THR': 'T', 'TRP': 'W', 'TYR': 'Y', 'VAL': 'V'}
@@ -105,8 +105,8 @@ class Data:
 
 
         get_protein_name(self.identifier)
-        generate_sequence_dict(self.protein_name)
-        generate_pdb_sequence_dict(self.preferred_chain, self.topology_dir)
+        get_sequence_dict(self.protein_name)
+        get_pdb_sequence_dict(self.preferred_chain, self.topology_dir)
         assign_generic_numbers_to_pdb(self.sequence_dict, self.pdb_sequence_dict)
 
     def get_dihedral(self):
@@ -120,11 +120,11 @@ class Data:
 # START MY TIMER
 start = timer()
 
-s1pr1 = Data("/home/gocky/python/GPCR-ML_data/pdbs/3V2Y.pdb", "", "3V2Y")
-s1pr1.aligne_with_generic_numbers()
+s1pr1 = GetReceptorMapping("/home/gocky/python/GPCR-ML_data/pdbs/3V2Y.pdb", "", "3V2Y")
+s1pr1.align_with_generic_numbers()
 
-s1pr2 = Data("/mdspace/gocky/S1PR2_project/homology_models_e28_docked/s1pr2.pdb", "", "s1pr2_human")
-s1pr2.aligne_with_generic_numbers()
+s1pr2 = GetReceptorMapping("/mdspace/gocky/S1PR2_project/homology_models_e28_docked/s1pr2.pdb", "", "s1pr2_human")
+s1pr2.align_with_generic_numbers()
 
 # STOP MY TIMER
 elapsed_time = timer() - start # in seconds
