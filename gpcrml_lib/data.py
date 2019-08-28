@@ -3,15 +3,17 @@ from urllib.request import urlopen
 from collections import OrderedDict
 from Bio import pairwise2
 from checker import special_character, len_is_x, capital_letter_or_digit
-from timeit import default_timer as timer
 
 import MDAnalysis as mda
+from MDAnalysis.analysis.dihedrals import Dihedral
 import pandas as pd
+import seaborn as sns
+
 
 class GetReceptorMapping:
     """Map PDB sequence to BWN numbering scheme from GPCRdb"""
 
-    def __init__(self, topology_dir, trajectory_dir, identifier):
+    def __init__(self, identifier, topology_dir, trajectory_dir):
         self.topology_dir = topology_dir
         self.trajectory_dir = trajectory_dir
         self.identifier = identifier
@@ -62,7 +64,12 @@ class GetReceptorMapping:
         protein = json.loads(response.read().decode('utf-8'))
         dictionary = OrderedDict()
         for residue in protein:
-            dictionary[residue['sequence_number']] = [residue['amino_acid'], residue['display_generic_number']]
+            if residue['display_generic_number'] is not None:
+                dictionary[residue['sequence_number']] = [residue['amino_acid'],
+                                                          residue['display_generic_number'].split('.')[0] + 'x' +
+                                                          residue['display_generic_number'].split('x')[1]]
+            else:
+                dictionary[residue['sequence_number']] = [residue['amino_acid'], residue['display_generic_number']]
         self.sequence_dict = dictionary
 
     def get_pdb_sequence_dict(self, preferred_chain, topology_dir):
@@ -75,8 +82,6 @@ class GetReceptorMapping:
 
         if self.pdb_marker:
             u.select_atoms('segid '+preferred_chain)
-        else:
-            pass
 
         universe_list = list(u.atoms[:].residues)
 
@@ -130,35 +135,78 @@ class GetReceptorMapping:
         instance.assign_generic_numbers_to_pdb(self.sequence_dict, self.pdb_sequence_dict)
 
 
-class GetDescriptors:
+class GetDescriptors(GetReceptorMapping):
     """
     Get different descriptor using instance attributes from class GetReceptorMapping.
     """
-    def __init__(self):
-        pass
+    def __init__(self, getreceptormapping, bwn_list):
+        self.pdb_generic_numbers_dict = getreceptormapping.pdb_generic_numbers_dict
+        self.topology_dir = getreceptormapping.topology_dir
+        self.trajectory_dir = getreceptormapping.trajectory_dir
+        self.pdb_marker = getreceptormapping.pdb_marker
+        self.preferred_chain = getreceptormapping.preferred_chain
 
-    def get_dihedral(self):
-        pass
+        self.bwn_list = bwn_list
 
-    def get_descriptor_x(self):
-        pass
+        self.dihedrals_phi = None
+        self.dihedrals_psi = None
 
+    def get_dihedrals_phi(self):
+        generic_dict = self.pdb_generic_numbers_dict
+        key_values_swap = {v: k for k, v in generic_dict.items()}
+        positions = [int(key_values_swap[x]) for x in self.bwn_list]
 
-# START MY TIMER
-start = timer()
+        u = mda.Universe(self.topology_dir, self.trajectory_dir)
 
-s1pr1 = GetReceptorMapping("/home/gocky/python/GPCR-ML_data/pdbs/3V2Y.pdb", "", "3V2Y")
-s1pr1.align_with_generic_numbers(s1pr1)
-print(s1pr1.pdb_generic_numbers_dict)
-print(s1pr1.pdb_sequence_dict)
+        ags = []
+        for res in u.residues:
+            if self.pdb_marker:
+                if res.segid == self.preferred_chain and res.resid in positions:
+                    ags.append(res.phi_selection())
+            else:
+                if res.resid in positions:
+                    ags.append(res.phi_selection())
 
-s1pr2 = GetReceptorMapping("/mdspace/gocky/S1PR2_project/homology_models_e28_docked/s1pr2.pdb", "", "s1pr2_human")
-s1pr2.align_with_generic_numbers(s1pr2)
-#print(s1pr2.pdb_generic_numbers_dict)
+        R = Dihedral(ags).run()
+        df = pd.DataFrame(R.angles)
+        df.columns = self.bwn_list
+        self.dihedrals_phi = df
 
+    def map_dihedrals_phi(self):
+        sns.set(style="whitegrid")
 
-# STOP MY TIMER
-elapsed_time = timer() - start  # in seconds
-print(elapsed_time)
+        values = self.dihedrals_phi
+        data = pd.DataFrame(values, columns=self.bwn_list)
+        data = data.rolling(1).mean()
 
+        sns.lineplot(data=data, palette="tab10", linewidth=0.5)
 
+    def get_dihedrals_psi(self):
+        generic_dict = self.pdb_generic_numbers_dict
+        key_values_swap = {v: k for k, v in generic_dict.items()}
+        positions = [int(key_values_swap[x]) for x in self.bwn_list]
+
+        u = mda.Universe(self.topology_dir, self.trajectory_dir)
+
+        ags = []
+        for res in u.residues:
+            if self.pdb_marker:
+                if res.segid == self.preferred_chain and res.resid in positions:
+                    ags.append(res.psi_selection())
+            else:
+                if res.resid in positions:
+                    ags.append(res.psi_selection())
+
+        R = Dihedral(ags).run()
+        df = pd.DataFrame(R.angles)
+        df.columns = self.bwn_list
+        self.dihedrals_psi = df
+
+    def map_dihedrals_psi(self):
+        sns.set(style="whitegrid")
+
+        values = self.dihedrals_psi
+        data = pd.DataFrame(values, columns=self.bwn_list)
+        data = data.rolling(1).mean()
+
+        sns.lineplot(data=data, palette="tab10", linewidth=0.5)
