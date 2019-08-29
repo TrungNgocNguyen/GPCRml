@@ -13,7 +13,7 @@ import seaborn as sns
 class GetReceptorMapping:
     """Map PDB sequence to BWN numbering scheme from GPCRdb"""
 
-    def __init__(self, identifier, topology_dir, trajectory_dir):
+    def __init__(self, identifier, topology_dir, trajectory_dir=None):
         self.topology_dir = topology_dir
         self.trajectory_dir = trajectory_dir
         self.identifier = identifier
@@ -157,7 +157,10 @@ class GetDescriptors(GetReceptorMapping):
         key_values_swap = {v: k for k, v in generic_dict.items()}
         positions = [int(key_values_swap[x]) for x in self.bwn_phi]
 
-        u = mda.Universe(self.topology_dir, self.trajectory_dir)
+        if self.trajectory_dir is None:
+            u = mda.Universe(self.topology_dir)
+        else:
+            u = mda.Universe(self.topology_dir, self.trajectory_dir)
 
         ags = []
         for res in u.residues:
@@ -187,7 +190,10 @@ class GetDescriptors(GetReceptorMapping):
         key_values_swap = {v: k for k, v in generic_dict.items()}
         positions = [int(key_values_swap[x]) for x in self.bwn_psi]
 
-        u = mda.Universe(self.topology_dir, self.trajectory_dir)
+        if self.trajectory_dir is None:
+            u = mda.Universe(self.topology_dir)
+        else:
+            u = mda.Universe(self.topology_dir, self.trajectory_dir)
 
         ags = []
         for res in u.residues:
