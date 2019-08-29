@@ -139,14 +139,15 @@ class GetDescriptors(GetReceptorMapping):
     """
     Get different descriptor using instance attributes from class GetReceptorMapping.
     """
-    def __init__(self, getreceptormapping, bwn_list):
+    def __init__(self, getreceptormapping, bwn_phi, bwn_psi):
         self.pdb_generic_numbers_dict = getreceptormapping.pdb_generic_numbers_dict
         self.topology_dir = getreceptormapping.topology_dir
         self.trajectory_dir = getreceptormapping.trajectory_dir
         self.pdb_marker = getreceptormapping.pdb_marker
         self.preferred_chain = getreceptormapping.preferred_chain
 
-        self.bwn_list = bwn_list
+        self.bwn_phi = bwn_phi
+        self.bwn_psi = bwn_psi
 
         self.dihedrals_phi = None
         self.dihedrals_psi = None
@@ -154,7 +155,7 @@ class GetDescriptors(GetReceptorMapping):
     def get_dihedrals_phi(self):
         generic_dict = self.pdb_generic_numbers_dict
         key_values_swap = {v: k for k, v in generic_dict.items()}
-        positions = [int(key_values_swap[x]) for x in self.bwn_list]
+        positions = [int(key_values_swap[x]) for x in self.bwn_phi]
 
         u = mda.Universe(self.topology_dir, self.trajectory_dir)
 
@@ -169,14 +170,14 @@ class GetDescriptors(GetReceptorMapping):
 
         R = Dihedral(ags).run()
         df = pd.DataFrame(R.angles)
-        df.columns = self.bwn_list
+        df.columns = self.bwn_phi
         self.dihedrals_phi = df
 
     def map_dihedrals_phi(self):
         sns.set(style="whitegrid")
 
         values = self.dihedrals_phi
-        data = pd.DataFrame(values, columns=self.bwn_list)
+        data = pd.DataFrame(values, columns=self.bwn_phi)
         data = data.rolling(1).mean()
 
         sns.lineplot(data=data, palette="tab10", linewidth=0.5)
@@ -184,7 +185,7 @@ class GetDescriptors(GetReceptorMapping):
     def get_dihedrals_psi(self):
         generic_dict = self.pdb_generic_numbers_dict
         key_values_swap = {v: k for k, v in generic_dict.items()}
-        positions = [int(key_values_swap[x]) for x in self.bwn_list]
+        positions = [int(key_values_swap[x]) for x in self.bwn_psi]
 
         u = mda.Universe(self.topology_dir, self.trajectory_dir)
 
@@ -199,14 +200,14 @@ class GetDescriptors(GetReceptorMapping):
 
         R = Dihedral(ags).run()
         df = pd.DataFrame(R.angles)
-        df.columns = self.bwn_list
+        df.columns = self.bwn_psi
         self.dihedrals_psi = df
 
     def map_dihedrals_psi(self):
         sns.set(style="whitegrid")
 
         values = self.dihedrals_psi
-        data = pd.DataFrame(values, columns=self.bwn_list)
+        data = pd.DataFrame(values, columns=self.bwn_psi)
         data = data.rolling(1).mean()
 
         sns.lineplot(data=data, palette="tab10", linewidth=0.5)
