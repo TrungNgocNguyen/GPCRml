@@ -2,7 +2,7 @@ import json
 from urllib.request import urlopen
 from collections import OrderedDict
 from Bio import pairwise2
-from checker import special_character, len_is_x, capital_letter_or_digit
+from .checker import special_character, len_is_x, capital_letter_or_digit
 
 import MDAnalysis as mda
 from MDAnalysis.analysis.dihedrals import Dihedral
