@@ -13,7 +13,7 @@ import pandas as pd
 import seaborn as sns
 
 # GPCRml modules
-from checker import *
+from .checker import *
 
 
 class Receptor(object):
