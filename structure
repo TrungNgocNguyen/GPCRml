@@ -1,22 +1,44 @@
-# hierarchical overview on GPCR-ML structure
-# use cases: - retrieve descriptors for a PDB code
-             - retrieve descriptors for all PDB codes stored in GPCRdb
-             - retrieve descriptors for homology_model
-             - retrieve descriptors from trajectory
+# hierarchical overview on GPCRml structure
 # each level is indented by a tab
+# use cases:
+    - retrieve dihedrals for PDB codes
+    - retrieve dihedrals for MD simulation
 
-README.md
+.gitignore
 LICENSE
+README.md
 requirements.txt
 setup.py
-(structure)
-(.gitignore)
+structure
+use_cases.py
 
 gpcrml_lib/
+    test_data/
+        3PBL.pdb
+        3RZE.pdb
+        4N6H.pdb
+        P29274.dcd
+        P29274.pdb
 	__init__.py
 	checker.py
 	helper.py
 	data.py
+	    class Receptor()
+	        get_protein_data()
+	        get_topology_data()
+	        assign_generic_numbers()
+	    class PDBReceptor(Receptor)
+	        get_protein_data()
+	        get_topology_data()
+	        assign_generic_numbers()
+	    class ReceptorLibrary()
+	        check_available_receptors()
+	        add_receptor()
+	        add_receptors_from_pdb()
+	        save_receptors()
+	        load_receptors()
+	    class Descriptors
+	        get_dihedrals()
 		class GetReceptorMapping
 			get_protein_name()
 			get_sequence_dict()
