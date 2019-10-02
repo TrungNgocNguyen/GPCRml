@@ -16,7 +16,7 @@ import seaborn as sns
 from .checker import *
 
 
-class Receptor(object):
+class Receptor:
     r"""The GPCRml Receptor class contains information describing a GPCR. The Receptor class always requires a path to
     a topology file and the appropriate UniProt ID. The topology file can be of any format supported by MDAnalysis. The
     UniProt ID identifies a receptor and is needed to retrieve necessary information from the GPCRdb API.
@@ -209,7 +209,7 @@ class PDBReceptor(Receptor):
         return '<Receptor with PDB code {}>'.format(self.pdb_code)
 
 
-class ReceptorLibrary(object):
+class ReceptorLibrary:
     r"""The GPCRml ReceptorLibrary stores instances of Receptor and PDBReceptor objects in self.receptors. It can be
     used to add, save and load receptors.
 
@@ -368,10 +368,17 @@ class Descriptors:
         merged_df = dfs[0]
         for df in dfs[1:]:
             merged_df = merged_df.join(df, how='outer')
-        if remove_nan:
-            return merged_df.dropna()
+
+        if dihedral_type == 'phi':
+            merged_df.index += '_phi'
         else:
-            return merged_df
+            merged_df.index += '_psi'
+
+        if remove_nan:
+            return merged_df.dropna().swapaxes("index", "columns")
+        else:
+            return merged_df.swapaxes("index", "columns")
+
 
 
 class GetReceptorMapping:
