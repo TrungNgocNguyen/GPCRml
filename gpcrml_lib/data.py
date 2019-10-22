@@ -112,7 +112,15 @@ class Receptor:
         u = u.select_atoms('protein')
         if len(self.preferred_chain) > 0:
             u = u.select_atoms('segid {}'.format(self.preferred_chain))
-        self.topology_sequence = ''.join([replace[resname] for resname in u.residues.resnames])
+
+        sequence = []
+        try:
+            for resname in u.residues.resnames:
+                sequence.append(replace[resname])
+        except KeyError:
+            pass
+
+        self.topology_sequence = ''.join(sequence)
         self.topology_resids = list(u.residues.resids)
 
     def assign_generic_numbers(self, mutation_strict=False):

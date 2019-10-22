@@ -16,6 +16,8 @@ phi = d.get_dihedrals('phi')
 psi = d.get_dihedrals('psi')
 print('\nPDBs with phi angles:\n\n', phi[:10])
 print('\nPDBs with psi angles:\n\n', psi[:10])
+
+# predict state of PDB files
 print()
 print('##########################')
 print('# Calculate predictions. #')
@@ -37,6 +39,8 @@ phi = d.get_dihedrals('phi')
 psi = d.get_dihedrals('psi')
 print('\nMolecular dynamics simulation frames with phi angles:\n\n', phi[:10])
 print('\nMolecular dynamics simulation frames with psi angles:\n\n', psi[:10])
+
+# calculate predictions of MD simulation
 print()
 print('##########################')
 print('# Calculate predictions. #')
