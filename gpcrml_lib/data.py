@@ -3,6 +3,7 @@ from collections import OrderedDict
 import json
 import pickle
 from urllib.request import urlopen, urlretrieve
+import sys
 
 # external packages
 from Bio import pairwise2
@@ -102,7 +103,6 @@ class Receptor:
             if len(self.topology_path) == 0:
                 self.topology_path = '{}/{}.pdb'.format(self.library_directory, self.pdb_code)
                 if not os.path.exists('{}/{}.pdb'.format(self.library_directory, self.pdb_code)):
-                    print('Downloading {} ...'.format(self.pdb_code))
                     urlretrieve('https://files.rcsb.org/download/{}.pdb'.format(self.pdb_code), self.topology_path)
 
         replace = {'ALA': 'A', 'ARG': 'R', 'ASN': 'N', 'ASP': 'D', 'CYS': 'C', 'GLN': 'Q', 'GLU': 'E',
@@ -114,11 +114,11 @@ class Receptor:
             u = u.select_atoms('segid {}'.format(self.preferred_chain))
 
         sequence = []
-        try:
-            for resname in u.residues.resnames:
+        for resname in u.residues.resnames:
+            try:
                 sequence.append(replace[resname])
-        except KeyError:
-            pass
+            except KeyError:
+                sequence.append('X')
 
         self.topology_sequence = ''.join(sequence)
         self.topology_resids = list(u.residues.resids)
@@ -281,14 +281,18 @@ class ReceptorLibrary:
         :param \**kwargs:
             same as Receptor class
         """
-        for pdb_code in pdb_codes:
+        for counter, pdb_code in enumerate(pdb_codes):
+            text = 'Adding receptor with PDB code {} to receptor library ({}/{}).'.format(pdb_code.upper(), counter + 1,
+                                                                                          len(pdb_codes))
+            sys.stdout.write('\r' + text)
+            sys.stdout.flush()
             pdb_receptor = PDBReceptor(pdb_code, library_directory, **kwargs)
             pdb_receptor.assign_generic_numbers()
             if self.receptors is None:
                 self.receptors = [pdb_receptor]
             else:
                 self.receptors.append(pdb_receptor)
-            print('Added receptor with PDB code {} to receptor library.'.format(pdb_code.upper()))
+        sys.stdout.write('\n')
 
     def save_receptors(self, library_path):
         r"""Saves self.receptors as pickled file whose path is described by the specified library path.
