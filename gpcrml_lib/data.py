@@ -234,7 +234,7 @@ class ReceptorLibrary:
             return '<Library with {} receptors>'.format(len(self.receptors))
 
     @staticmethod
-    def check_available_receptors():
+    def check_available_receptors(family=None):
         r"""Sends a request to the GPCRdb API for available GPCRs in RCSB and returns the PDB codes as list of strings.
 
         :returns:
@@ -242,7 +242,33 @@ class ReceptorLibrary:
         :rtype: ``list``
         """
         response = urlopen('https://gpcrdb.org/services/structure/')
-        return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))]
+        if family is None:
+            print('List of all GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))]
+        elif family is "A":
+            print('List of class A GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))
+                    if receptor['family'][:3] == "001"]
+        elif family is "B1":
+            print('List of class B1 GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))
+                    if receptor['family'][:3] == "002"]
+        elif family is "B2":
+            print('List of class B2 GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))
+                    if receptor['family'][:3] == "003"]
+        elif family is "C":
+            print('List of class C GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))
+                    if receptor['family'][:3] == "004"]
+        elif family is "F":
+            print('List of class F GPCR Crystal Structures')
+            return [receptor['pdb_code'] for receptor in json.loads(response.read().decode('utf-8'))
+                    if receptor['family'][:3] == "005"]
+        else:
+            print('GPCR class not understood. Please specify "family" argument as "A", "B1", "B2", "C" or "F" to get a'
+                  'list of class X GPCR crystal structures. If you dont specify family, all crystal structures'
+                  'will be retrieved.')
 
     def add_receptor(self, topology_path, uniprotid, **kwargs):
         r"""Adds a Receptor instance with assigned generic numbers to self.receptors.
@@ -358,21 +384,24 @@ class Descriptors:
             generic_numbers = []
             atom_groups = []
             for resid in resids:
-                if dihedral_type == 'phi':
-                    atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].phi_selection()
-                elif dihedral_type == 'psi':
-                    atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].psi_selection()
-                else:
-                    print('Only phi and psi are valid values for dihedral type.')
-                    return
-                if atom_group is not None:
-                    atom_groups.append(atom_group)
-                    generic_numbers.append(receptor.topology_generic_numbers[resid])
+                if not resid == 0:
+                    if dihedral_type == 'phi':
+                        atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].phi_selection()
+                    elif dihedral_type == 'psi':
+                        atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].psi_selection()
+                    else:
+                        print('Only phi and psi are valid values for dihedral type.')
+                        return
+                    if atom_group is not None:
+                        atom_groups.append(atom_group)
+                        generic_numbers.append(receptor.topology_generic_numbers[resid])
             dihedrals = Dihedral(atom_groups).run()
             df = pd.DataFrame(data=dihedrals.angles.transpose(),
                               columns=['{}_{}'.format(name, frame) for frame in range(len(u.trajectory))],
                               index=generic_numbers)
             dfs.append(df)
+            print('Calculated {} angle for {}'.format(dihedral_type, receptor))
+
         merged_df = dfs[0]
         for df in dfs[1:]:
             merged_df = merged_df.join(df, how='outer')
