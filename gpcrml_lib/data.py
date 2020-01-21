@@ -344,13 +344,18 @@ class Descriptors:
         :rtype: ``pd.DataFrame``
         """
         dfs = []
-        for receptor in self.receptor_library.receptors:
+        num_receptors = len(self.receptor_library.receptors)
+        for counter, receptor in enumerate(self.receptor_library.receptors):
             name = receptor.topology_path.split('/')[-1].split('.')[0]
+            text = 'Adding {} angles for {} to receptor library ({}/{}).'.format(dihedral_type, name, counter + 1,
+                                                                                 num_receptors)
+            sys.stdout.write('\r' + text)
+            sys.stdout.flush()
             if len(receptor.trajectory_path) == 0:
                 u = mda.Universe(receptor.topology_path)
             else:
                 u = mda.Universe(receptor.topology_path, receptor.trajectory_path)
-            protein = u.select_atoms('protein')
+            protein = mda.Merge(u.select_atoms('protein and not altloc B'))  # fix for altloc
             if len(receptor.preferred_chain) > 0:
                 protein = protein.select_atoms('segid {}'.format(receptor.preferred_chain))
             resids = [resid for resid, generic_number in sorted(receptor.topology_generic_numbers.items(),
@@ -359,7 +364,8 @@ class Descriptors:
             atom_groups = []
             for resid in resids:
                 if dihedral_type == 'phi':
-                    atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].phi_selection()
+                    if resid > 0:
+                        atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].phi_selection()
                 elif dihedral_type == 'psi':
                     atom_group = protein.select_atoms('resid {}'.format(resid)).residues[0].psi_selection()
                 else:
@@ -373,6 +379,7 @@ class Descriptors:
                               columns=['{}_{}'.format(name, frame) for frame in range(len(u.trajectory))],
                               index=generic_numbers)
             dfs.append(df)
+        sys.stdout.write('\nMerging results...\n')
         merged_df = dfs[0]
         for df in dfs[1:]:
             merged_df = merged_df.join(df, how='outer')
