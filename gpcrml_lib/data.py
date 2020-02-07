@@ -381,7 +381,7 @@ class Descriptors:
                 u = mda.Universe(receptor.topology_path)
             else:
                 u = mda.Universe(receptor.topology_path, receptor.trajectory_path)
-            protein = mda.Merge(u.select_atoms('protein and not altloc B'))  # fix for altloc
+            protein = u.select_atoms('protein and not altloc B')  # fix for altloc
             if len(receptor.preferred_chain) > 0:
                 protein = protein.select_atoms('segid {}'.format(receptor.preferred_chain))
             resids = [resid for resid, generic_number in sorted(receptor.topology_generic_numbers.items(),
