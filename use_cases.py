@@ -1,7 +1,7 @@
 """ This file contains use cases. It can be executed as script and prints results to the console."""
 
 from gpcrml_lib.data import ReceptorLibrary, Descriptors
-from gpcrml_lib.machine_learning import DecisionTreePredictions
+from gpcrml_lib.machine_learning import DTCPredictions
 
 # get phi and psi angles for a set of PDB codes
 print()
@@ -22,7 +22,7 @@ print()
 print('##########################')
 print('# Calculate predictions. #')
 print('##########################\n')
-predictions = DecisionTreePredictions(phi, psi)
+predictions = DTCPredictions(phi, psi)
 predictions.predict()
 
 # get phi and psi angles for an MD simulation
@@ -45,7 +45,7 @@ print()
 print('##########################')
 print('# Calculate predictions. #')
 print('##########################\n')
-predictions = DecisionTreePredictions(phi, psi)
+predictions = DTC(phi, psi)
 predictions.predict()
 print('Plotting dihedrals...')
 predictions.plot_dihedrals()
