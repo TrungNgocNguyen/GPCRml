@@ -382,8 +382,6 @@ class Descriptors:
             else:
                 u = mda.Universe(receptor.topology_path, receptor.trajectory_path)
             protein = u.select_atoms('protein and not altloc B')  # fix for altloc
-            # print(protein.select_atoms('resid 18:18')) #delete_later
-            # print(protein.select_atoms('resid 18').residues[0]) #delete_later
             if len(receptor.preferred_chain) > 0:
                 protein = protein.select_atoms('segid {}'.format(receptor.preferred_chain))
             resids = [resid for resid, generic_number in sorted(receptor.topology_generic_numbers.items(),
